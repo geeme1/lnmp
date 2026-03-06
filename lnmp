@@ -496,6 +496,94 @@ do_info() {
 }
 
 # ========================
+# PHP 扩展管理
+# ========================
+
+php_ext_install() {
+    local ext_name="$1"
+    local php_ver
+
+    if [ -f /usr/local/nginx/conf/.php_version ]; then
+        php_ver=$(cat /usr/local/nginx/conf/.php_version)
+    else
+        php_ver=$(php -v 2>/dev/null | head -1 | grep -oP '\d+\.\d+' | head -1)
+    fi
+
+    if [ -z "$php_ver" ]; then
+        print_error "无法检测 PHP 版本"
+        return 1
+    fi
+
+    if [ -z "$ext_name" ]; then
+        echo ""
+        echo -e "${BOLD}可安装的常用扩展:${NC}"
+        echo ""
+        echo -e "  ${CYAN}curl gd mbstring xml zip bcmath intl soap${NC}"
+        echo -e "  ${CYAN}redis memcached imagick sqlite3 pgsql${NC}"
+        echo -e "  ${CYAN}ldap imap gmp bz2 exif fileinfo sockets xdebug${NC}"
+        echo ""
+        echo -en "${BOLD}请输入要安装的扩展名 (多个用空格分隔): ${NC}"
+        read -r ext_name
+    fi
+
+    if [ -z "$ext_name" ]; then
+        print_error "扩展名不能为空"
+        return 1
+    fi
+
+    local php_prefix
+    if command -v apt-get &>/dev/null; then
+        php_prefix="php${php_ver}"
+    else
+        php_prefix="php"
+    fi
+
+    for ext in $ext_name; do
+        local pkg="${php_prefix}-${ext}"
+        print_info "安装 ${pkg}..."
+
+        if command -v apt-get &>/dev/null; then
+            DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"
+        elif command -v dnf &>/dev/null; then
+            dnf install -y "$pkg"
+        elif command -v yum &>/dev/null; then
+            yum install -y "$pkg"
+        fi
+
+        if [ $? -eq 0 ]; then
+            print_ok "${ext} 安装成功"
+        else
+            print_error "${ext} 安装失败"
+        fi
+    done
+
+    local fpm_svc
+    fpm_svc=$(get_php_fpm_service)
+    systemctl restart "$fpm_svc" 2>/dev/null
+    print_ok "PHP-FPM 已重启"
+}
+
+php_ext_list() {
+    local php_bin
+    if [ -f /usr/local/nginx/conf/.php_version ]; then
+        local php_ver
+        php_ver=$(cat /usr/local/nginx/conf/.php_version)
+        php_bin="php${php_ver}"
+    fi
+    if ! command -v "$php_bin" &>/dev/null; then
+        php_bin="php"
+    fi
+
+    echo ""
+    echo -e "${BOLD}已安装的 PHP 扩展:${NC}"
+    echo ""
+    $php_bin -m 2>/dev/null | grep -v '^\[' | sort | while read -r ext; do
+        [ -n "$ext" ] && echo -e "  ${GREEN}*${NC} ${ext}"
+    done
+    echo ""
+}
+
+# ========================
 # 使用帮助
 # ========================
 
@@ -520,6 +608,10 @@ show_usage() {
     echo -e "${BOLD}SSL 证书:${NC}"
     echo -e "  ${CYAN}ssl add [域名]${NC}  申请 SSL 证书"
     echo -e "  ${CYAN}ssl renew${NC}       续期所有证书"
+    echo ""
+    echo -e "${BOLD}PHP 扩展:${NC}"
+    echo -e "  ${CYAN}php ext install [名称]${NC}  安装 PHP 扩展"
+    echo -e "  ${CYAN}php ext list${NC}            列出已安装扩展"
     echo ""
     echo -e "${BOLD}其他:${NC}"
     echo -e "  ${CYAN}info${NC}            查看安装信息"
@@ -554,6 +646,18 @@ case "$1" in
             add)   ssl_add "$3" ;;
             renew) ssl_renew ;;
             *)     print_error "用法: lnmp ssl {add [域名]|renew}" ;;
+        esac
+        ;;
+    php)
+        case "$2" in
+            ext)
+                case "$3" in
+                    install) php_ext_install "$4" ;;
+                    list)    php_ext_list ;;
+                    *)       print_error "用法: lnmp php ext {install [名称]|list}" ;;
+                esac
+                ;;
+            *)  print_error "用法: lnmp php ext {install [名称]|list}" ;;
         esac
         ;;
     info) do_info ;;
