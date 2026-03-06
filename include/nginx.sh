@@ -140,14 +140,21 @@ http {
         root /home/wwwroot/default;
         index index.html index.htm index.php;
 
-        location ~ \.php\$ {
+        if (!-e \$request_filename) {
+            rewrite ^(.*)\$ /index.php\$1 last;
+        }
+
+        location ~ \.php(/|\$) {
             fastcgi_pass unix:/run/php-fpm/www.sock;
             fastcgi_index index.php;
+            fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+            set \$path_info \$fastcgi_path_info;
+            fastcgi_param PATH_INFO \$path_info;
             fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
             include fastcgi_params;
         }
 
-        location ~ /.well-known {
+        location ^~ /.well-known {
             allow all;
         }
 

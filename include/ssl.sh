@@ -97,8 +97,9 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name ${domain};
     root ${webroot};
     index index.html index.htm index.php;
@@ -112,22 +113,26 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
 
-    # 安全头
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
-    # PHP 支持
-    location ~ \.php\$ {
-        try_files \$uri =404;
+    if (!-e \$request_filename) {
+        rewrite ^(.*)\$ /index.php\$1 last;
+    }
+
+    location ~ \.php(/|\$) {
         fastcgi_pass unix:${php_sock};
         fastcgi_index index.php;
+        fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+        set \$path_info \$fastcgi_path_info;
+        fastcgi_param PATH_INFO \$path_info;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
     }
 
-    location ~ /.well-known {
+    location ^~ /.well-known {
         allow all;
     }
 
