@@ -14,7 +14,7 @@
 ## 一键安装
 
 ```bash
-wget https://github.com/geeme1/lnmp/archive/refs/heads/main.tar.gz -O lnmp.tar.gz && tar zxf lnmp.tar.gz && cd lnmp-main && chmod +x install.sh && ./install.sh
+wget https://github.com/geeme1/lnmp/archive/refs/heads/master.tar.gz -O lnmp.tar.gz && tar zxf lnmp.tar.gz && cd lnmp-master && chmod +x install.sh && ./install.sh
 ```
 
 ## 管理命令
