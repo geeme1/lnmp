@@ -135,6 +135,7 @@ http {
     # 默认站点
     server {
         listen 80 default_server;
+        listen [::]:80 default_server;
         server_name _;
         root /home/wwwroot/default;
         index index.html index.htm index.php;

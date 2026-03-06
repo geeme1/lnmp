@@ -175,6 +175,7 @@ vhost_add() {
     cat > "${VHOST_DIR}/${domain}.conf" <<VHOST
 server {
     listen 80;
+    listen [::]:80;
     server_name ${domain};
     root ${site_root};
     index index.html index.htm index.php;
@@ -377,6 +378,7 @@ vhost_add_simple() {
     cat > "${VHOST_DIR}/${domain}.conf" <<VHOST
 server {
     listen 80;
+    listen [::]:80;
     server_name ${domain};
     root ${site_root};
     index index.html index.htm index.php;
@@ -411,12 +413,14 @@ update_vhost_ssl() {
     cat > "${VHOST_DIR}/${domain}.conf" <<VHOST
 server {
     listen 80;
+    listen [::]:80;
     server_name ${domain};
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name ${domain};
     root ${site_root};
     index index.html index.htm index.php;
