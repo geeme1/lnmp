@@ -147,6 +147,10 @@ http {
             include fastcgi_params;
         }
 
+        location ~ /.well-known {
+            allow all;
+        }
+
         location ~ /\. {
             deny all;
         }

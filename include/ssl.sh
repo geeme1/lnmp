@@ -127,7 +127,10 @@ server {
         include fastcgi_params;
     }
 
-    # 禁止访问隐藏文件
+    location ~ /.well-known {
+        allow all;
+    }
+
     location ~ /\. {
         deny all;
     }
