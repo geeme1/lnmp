@@ -102,7 +102,8 @@ install_php() {
     # mysqlnd / mysqli
     case "$PKG_MGR" in
         apt)
-            extensions+=("${php_prefix}-mysqlnd" "${php_prefix}-mysqli" 2>/dev/null)
+            extensions+=("${php_prefix}-mysqlnd")
+            extensions+=("${php_prefix}-mysqli")
             ;;
         yum|dnf)
             extensions+=("${php_prefix}-mysqlnd")
